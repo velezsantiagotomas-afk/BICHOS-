@@ -268,15 +268,16 @@ def overlay(frame, name, t, lt):
         # runner crossing the bottom
         if S[name + '_run'] is None:
             return
-        p = lt / SEG_LEN[name]
-        goes_right = name != 'cap2'
-        x = -150 + (W + 300) * p if goes_right else W + 150 - (W + 300) * p
-        hop = abs(math.sin(lt * 9)) * 50
-        place(frame, S[name + '_run'], x, 1760 - hop, 1.0, rot=math.sin(lt * 9) * 6, flip=goes_right)
-        # trailing bones/paws
-        for k in range(3):
-            tx = x - (130 + k * 110) * (1 if goes_right else -1)
-            place(frame, S['paw'] if k % 2 == 0 else S['bone'], tx, 1830 - (k % 2) * 20, 0.55, alpha=0.8 - k * 0.2)
+        # emoji fijo en el centro inferior: salta y se balancea sin desplazarse
+        x = W / 2
+        hop = abs(math.sin(lt * 7)) * 55
+        sq = 1 + 0.06 * math.sin(lt * 14)
+        place(frame, S[name + '_run'], x, 1760 - hop, pop_in(lt, 0.3) * sq, rot=math.sin(lt * 7) * 8,
+              flip=name != 'cap2')
+        # huellitas y huesos fijos a los costados, con un leve rebote
+        for k, (dx, kind) in enumerate([(-230, 'paw'), (-380, 'bone'), (230, 'bone'), (380, 'paw')]):
+            y = 1800 - abs(math.sin(lt * 7 + k)) * 20
+            place(frame, S[kind], x + dx, y, pop_in(lt, 0.4 + k * 0.08) * 0.6, rot=math.sin(lt * 5 + k) * 12)
 
     elif name == 'address':
         cy = 1000
