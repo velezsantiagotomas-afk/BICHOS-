@@ -177,12 +177,12 @@ S['conf'] = [emoji(c, 70) for c in CONF]
 caps = [
     ('cap1', '🛍️', 'Alimento suelto', 'y por bolsa', TEAL, '🐕'),
     ('cap2', '🦮', 'Correas, ropita', 'y accesorios', PINK, '🐈'),
-    ('cap3', '🐱', '¡Todo para', 'perros y gatos!', ORANGE, '🐕'),
+    ('cap3', '🐱', '¡Todo para', 'perros y gatos!', ORANGE, None),
 ]
 for name, e, l1, l2, col, runner in caps:
     S[name + '_a'] = pill([emoji(e, 96), text_sprite(l1, 76, sw=0, shadow=False)], col)
     S[name + '_b'] = pill([text_sprite(l2, 76, sw=0, shadow=False)], PURPLE)
-    S[name + '_run'] = emoji(runner, 170)
+    S[name + '_run'] = emoji(runner, 170) if runner else None
 S['bone'] = emoji('🦴', 80)
 
 # address
@@ -266,6 +266,8 @@ def overlay(frame, name, t, lt):
         place(frame, S[name + '_a'], xa, 1360)
         place(frame, S[name + '_b'], xb, 1510)
         # runner crossing the bottom
+        if S[name + '_run'] is None:
+            return
         p = lt / SEG_LEN[name]
         goes_right = name != 'cap2'
         x = -150 + (W + 300) * p if goes_right else W + 150 - (W + 300) * p
@@ -290,10 +292,6 @@ def overlay(frame, name, t, lt):
         place(frame, S['addr_2'], W / 2, cy + 270, pop_in(lt, 1.15) * (1 + 0.04 * math.sin(lt * 6)))
         place(frame, S['addr_e1'], 150, 1640, pop_in(lt, 1.4), rot=math.sin(lt * 4) * 10)
         place(frame, S['addr_e2'], W - 150, 1640, pop_in(lt, 1.6), rot=-math.sin(lt * 4) * 10)
-        # running dog along bottom
-        x = -150 + (W + 300) * clamp((lt - 1.8) / 3.0)
-        if 1.8 < lt < 4.8:
-            place(frame, S['cap1_run'], x, 1800 - abs(math.sin(lt * 9)) * 40, 0.8, flip=True)
         fade_out(frame, lt, SEG_LEN[name])
 
     elif name == 'hours':

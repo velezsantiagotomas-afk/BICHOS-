@@ -2,7 +2,7 @@ import numpy as np, wave, sys
 
 SR = 44100
 DUR = 30.0
-BPM = 124
+BPM = 140
 BEAT = 60 / BPM
 N = int(SR * DUR)
 music = np.zeros((N, 2))
@@ -81,45 +81,76 @@ def bass(note, d):
     rel = np.clip((d - t) / 0.03, 0, 1)
     return lowpass(s * env * rel, 900) * 0.42
 
-# ---------- song ----------
-# progression (C G Am F) in C major, 1 bar each (4 beats)
-chords = [[60, 64, 67], [59, 62, 67], [57, 60, 64], [57, 60, 65]]
-roots = [36, 43, 45, 41]
-# catchy melody per 2-bar phrase: (beat offset, midi, length in beats)
-melA = [(0, 72, .5), (.5, 74, .5), (1, 76, .5), (1.5, 79, 1), (2.5, 76, .5), (3, 74, 1),
-        (4, 74, .5), (4.5, 76, .5), (5, 79, .5), (5.5, 81, 1), (6.5, 79, .5), (7, 76, 1)]
-melB = [(0, 81, .5), (.5, 79, .5), (1, 76, .5), (1.5, 76, 1), (2.5, 74, .5), (3, 72, 1),
-        (4, 77, .5), (4.5, 76, .5), (5, 74, .5), (5.5, 72, .5), (6, 74, .5), (6.5, 76, 1.5)]
+# ---------- song (versión más alegre: 140 BPM, mayor, saltarina) ----------
+def whistle(note, d):
+    t = tt(d)
+    f = midi(note) * (1 + 0.006 * np.sin(2 * np.pi * 6 * t) * np.clip((t - 0.08) / 0.1, 0, 1))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    s = np.sin(ph) + 0.12 * np.sin(2 * ph)
+    env = np.clip(t / 0.02, 0, 1) * np.clip((d - t) / 0.04, 0, 1)
+    return s * env * 0.22
+
+def glock(note, d=0.5):
+    t = tt(d)
+    f = midi(note)
+    s = np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * f * 2.76 * t) * np.exp(-t * 12)
+    return s * np.exp(-t * 7) * np.clip(t / 0.002, 0, 1) * 0.18
+
+def tamb():
+    t = tt(0.09)
+    n = rng.standard_normal(len(t)); n = n - lowpass(n, 8000)
+    return n * np.exp(-t * 45) * 0.10
+
+def stab(notes, d=0.16):
+    t = tt(d)
+    s = np.zeros_like(t)
+    for n in notes:
+        f = midi(n)
+        for h in range(1, 6):
+            s += np.sin(2 * np.pi * f * h * t) / h ** 1.3 * np.exp(-t * (10 + h * 3))
+    return s * np.clip((d - t) / 0.02, 0, 1) * np.clip(t / 0.003, 0, 1) * 0.12
+
+# I - IV - V - IV en Re mayor (soleado)
+chords = [[62, 66, 69], [62, 67, 71], [64, 69, 73], [62, 67, 71]]
+roots = [38, 43, 45, 43]
+# melodías saltarinas (offset en beats, nota, largo)
+melA = [(0, 74, .5), (.5, 78, .5), (1, 81, .75), (1.75, 78, .25), (2, 81, .5), (2.5, 83, .5), (3, 81, 1),
+        (4, 79, .5), (4.5, 83, .5), (5, 86, .75), (5.75, 83, .25), (6, 81, .5), (6.5, 78, .5), (7, 76, 1)]
+melB = [(0, 81, .25), (.25, 83, .25), (.5, 85, .5), (1, 86, .5), (1.5, 81, .5), (2, 78, .5), (2.5, 81, .5), (3, 83, 1),
+        (4, 83, .5), (4.5, 81, .5), (5, 79, .5), (5.5, 76, .5), (6, 78, .5), (6.5, 76, .5), (7, 74, 1)]
 
 bars = int(DUR / (BEAT * 4)) + 1
 for b in range(bars):
     t0 = b * 4 * BEAT
     ci = b % 4
-    # drums
     for k in range(4):
         add(music, t0 + k * BEAT, kick(), gain=1.0)
         if k in (1, 3):
-            add(music, t0 + k * BEAT, snare(), gain=0.9)
-            add(music, t0 + k * BEAT, clap(), pan=0.1)
-        for s in range(2):
-            add(music, t0 + (k + s * .5 + .0) * BEAT + (BEAT / 2 if s else 0) * 0, hat(open_=(s == 1 and k == 3)),
-                pan=0.35, gain=0.8 if s else 0.5)
-    # off-beat hats
-    for k in range(4):
-        add(music, t0 + (k + .5) * BEAT, hat(), pan=0.35, gain=0.9)
-    # bass: root on 1, octave bounce
+            add(music, t0 + k * BEAT, snare(), gain=0.8)
+        add(music, t0 + k * BEAT, clap(), pan=0.1, gain=0.9 if k in (1, 3) else 0.45)
+        add(music, t0 + (k + .5) * BEAT, hat(open_=(k == 3)), pan=0.35, gain=0.9)
+        for s16 in range(4):
+            add(music, t0 + (k + s16 / 4) * BEAT, tamb(), pan=-0.45, gain=1.0 if s16 % 2 else 0.5)
+    # bajo saltarín en octavas
     r = roots[ci]
-    for k, (off, oct_) in enumerate([(0, 0), (1.5, 12), (2, 0), (3, 7), (3.5, 12)]):
-        add(music, t0 + off * BEAT, bass(r + oct_, BEAT * 0.45))
-    # ukulele-ish strum: rhythm 1 . & . 2&  . 3 & 4 &
-    for off in (0, 1, 1.5, 2.5, 3, 3.5):
+    for off in (0, .5, 1, 1.5, 2, 2.5, 3, 3.5):
+        add(music, t0 + off * BEAT, bass(r + (12 if (off * 2) % 2 else 0), BEAT * 0.4), gain=0.9)
+    # acordes staccato a contratiempo (estilo "bouncy")
+    for off in (.5, 1.5, 2.5, 3.5, 3.75):
+        add(music, t0 + off * BEAT, stab(chords[ci]), pan=0.25)
+    # rasgueo
+    for off in (0, 1, 2, 2.75, 3.25):
         for j, n in enumerate(chords[ci]):
-            add(music, t0 + off * BEAT + j * 0.008, pluck(n, 0.4), pan=-0.3 + j * 0.05, gain=0.75)
-    # melody on 2-bar phrases, starts at bar 2 so the intro breathes
-    if b >= 2 and b % 2 == 0:
-        mel = melA if (b // 2) % 2 == 1 else melB
+            add(music, t0 + off * BEAT + j * 0.007, pluck(n, 0.3, bright=1.3), pan=-0.3 + j * 0.05, gain=0.55)
+    # glockenspiel arpegiado
+    for k, n in enumerate([chords[ci][0] + 12, chords[ci][1] + 12, chords[ci][2] + 12, chords[ci][1] + 24]):
+        add(music, t0 + k * BEAT + .25 * BEAT, glock(n), pan=0.4, gain=0.8)
+    # melodía silbada + campanita doblando, desde el compás 1
+    if b >= 1 and (b - 1) % 2 == 0:
+        mel = melA if ((b - 1) // 2) % 2 == 0 else melB
         for off, n, ln in mel:
-            add(music, t0 + off * BEAT, bell(n, ln * BEAT + 0.25), pan=0.15, gain=0.9)
+            add(music, t0 + off * BEAT, whistle(n, ln * BEAT * 0.95), pan=0.1, gain=1.0)
+            add(music, t0 + off * BEAT, bell(n + 12, ln * BEAT + 0.15), pan=-0.1, gain=0.35)
 
 # ---------- SFX ----------
 sfx = np.zeros((N, 2))
