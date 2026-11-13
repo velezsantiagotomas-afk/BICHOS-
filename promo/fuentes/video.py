@@ -69,7 +69,7 @@ def pill(content, bg, pad=(46, 26), radius=None, outline=WHITE, ow=6):
         x += c.width + gap
     return im
 
-def card(w, h, top, bottom, radius=60):
+def card(w, h, top, bottom, radius=60, outline=WHITE):
     im = Image.new('RGBA', (w + 60, h + 80), (0, 0, 0, 0))
     shadow = Image.new('RGBA', im.size, (0, 0, 0, 0))
     ImageDraw.Draw(shadow).rounded_rectangle((30, 50, 30 + w, 50 + h), radius, fill=(0, 0, 0, 140))
@@ -85,7 +85,7 @@ def card(w, h, top, bottom, radius=60):
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h - 1), radius, fill=255)
     body = Image.new('RGBA', (w, h), (0, 0, 0, 0)); body.paste(grad, (0, 0), mask)
     im.alpha_composite(body, (30, 30))
-    ImageDraw.Draw(im).rounded_rectangle((30, 30, 30 + w, 30 + h), radius, outline=WHITE, width=8)
+    ImageDraw.Draw(im).rounded_rectangle((30, 30, 30 + w, 30 + h), radius, outline=outline, width=10)
     return im
 
 # easing
@@ -186,12 +186,12 @@ for name, e, l1, l2, col, runner in caps:
 S['bone'] = emoji('🦴', 80)
 
 # address
-S['addr_card'] = card(940, 860, (255, 150, 30), (255, 84, 140))
+S['addr_card'] = card(940, 860, (255, 255, 255), (255, 241, 210), outline=ORANGE)
 S['pin'] = emoji('📍', 210)
-S['addr_h'] = text_sprite('NUEVA DIRECCIÓN', 82, fill=YELLOW, stroke=DARK, sw=9)
-S['addr_1'] = text_sprite('Roque Sáenz Peña', 104, fill=WHITE, stroke=DARK, sw=10)
-S['addr_y'] = text_sprite('y', 90, fill=YELLOW, stroke=DARK, sw=9)
-S['addr_2'] = text_sprite('Garibaldi', 140, fill=WHITE, stroke=DARK, sw=12)
+S['addr_h'] = text_sprite('NUEVA DIRECCIÓN', 82, fill=ORANGE, stroke=WHITE, sw=8, shadow=False)
+S['addr_1'] = text_sprite('Roque Sáenz Peña', 104, fill=PURPLE, stroke=WHITE, sw=8, shadow=False)
+S['addr_y'] = text_sprite('y', 90, fill=ORANGE, stroke=WHITE, sw=8, shadow=False)
+S['addr_2'] = text_sprite('Garibaldi', 140, fill=PURPLE, stroke=WHITE, sw=10, shadow=False)
 S['addr_e1'] = emoji('🏠', 120); S['addr_e2'] = emoji('🐾', 100)
 S['addr_top'] = text_sprite('¡NOS MUDAMOS!', 110, fill=WHITE, stroke=PURPLE, sw=12)
 
@@ -214,7 +214,7 @@ S['de'] = text_sprite('de siempre!', 128, fill=WHITE, stroke=PURPLE, sw=13)
 S['heart'] = emoji('💛', 90); S['heart2'] = emoji('🧡', 80)
 S['paw'] = emoji('🐾', 90)
 S['o_dog'] = emoji('🐶', 200); S['o_cat'] = emoji('🐱', 200)
-S['o_addr'] = pill([emoji('📍', 64), text_sprite('Roque Sáenz Peña y Garibaldi', 54, sw=0, shadow=False)], ORANGE, pad=(36, 20))
+S['o_addr'] = pill([emoji('📍', 64), text_sprite('Roque Sáenz Peña y Garibaldi', 54, sw=0, shadow=False)], PURPLE, pad=(36, 20))
 
 confetti = [(random.uniform(0, W), random.uniform(-1.5, 0), random.uniform(240, 520), random.uniform(-60, 60),
              random.uniform(0, 6.28), random.choice(range(len(CONF))), random.uniform(0.6, 1.1)) for _ in range(26)]
