@@ -1,6 +1,6 @@
 exec(open('common_head.py').read())
 
-VX = UP + 'cfae7d86-20261116_104153.mp4'   # estante Excellent + Royal Canin
+VX = UP + 'ea5b05fa-20261116_110057.mp4'   # estante Excellent + Royal Canin
 PHOTOS = sys.argv[2].split(';') if len(sys.argv) > 2 else []
 END = 15.0
 RED = (215, 25, 55); RC_RED = (200, 20, 40); GOLD = (190, 150, 60)
@@ -24,7 +24,7 @@ class CropClip(Clip):
         buf = self.p.stdout.read(W * H * 3)
         if len(buf) == W * H * 3:
             arr = np.frombuffer(buf, np.uint8).reshape(H, W, 3)
-            arr, _ = remove_fan(arr, dark=105, sat=80, dil=0.03)
+            arr, _ = remove_fan(arr, dark=105, sat=80, dil=0.03, touch_top=False, top_frac=0.05)
             if self.blur:
                 arr = cv2.GaussianBlur(arr, (0, 0), self.blur)
             if self.dim:
@@ -56,12 +56,13 @@ def polaroid(spec, w=640, rot=0):
     return card_
 
 
+ZOOM = 'crop=920:1636:80:170'          # acerca un poco las bolsas
 SEGS = [
     (0.0, 2.5, lambda: CropClip(VX, 0.0, 2.5), 'intro'),
-    (2.5, 5.5, lambda: CropClip(VX, 0.3, 3.0), 'excellent'),
-    (5.5, 8.5, lambda: CropClip(VX, 4.9, 3.0), 'royal'),
-    (8.5, 12.0, lambda: CropClip(VX, 2.0, 3.5, blur=16, dim=0.25), 'photos'),
-    (12.0, END, lambda: CropClip(VX, 6.0, 1.95, blur=12, dim=0.2), 'outro'),
+    (2.5, 5.5, lambda: CropClip(VX, 0.2, 3.0, pre=ZOOM), 'excellent'),
+    (5.5, 8.5, lambda: CropClip(VX, 3.2, 3.0, pre=ZOOM), 'royal'),
+    (8.5, 12.0, lambda: CropClip(VX, 1.0, 3.5, blur=16, dim=0.25), 'photos'),
+    (12.0, END, lambda: CropClip(VX, 3.3, 2.95, blur=12, dim=0.2), 'outro'),
 ]
 
 S = {}
@@ -81,7 +82,7 @@ S['ex_4'] = pill([emoji('🛡️', 70), text_sprite('Sistema inmune sano', 54, f
 S['kg'] = pill([text_sprite('3 kg', 70, sw=0, shadow=False)], ORANGE, pad=(36, 18))
 
 S['rc_t'] = pill([emoji('👑', 96), text_sprite('Royal Canin', 80, sw=0, shadow=False)], RC_RED)
-S['rc_1'] = pill([emoji('🌭', 72), text_sprite('Dachshund adulto', 60, sw=0, shadow=False)], GOLD)
+S['rc_1'] = pill([emoji('🌭', 72), text_sprite('Dachshund: perros salchicha', 54, sw=0, shadow=False)], GOLD)
 S['rc_2'] = pill([emoji('🐶', 72), text_sprite('Puppy Mini · 2 a 10 meses', 56, sw=0, shadow=False)], (40, 150, 215))
 S['rc_3'] = pill([emoji('🧠', 70), text_sprite('Desarrollo del cerebro', 54, fill=DARK, sw=0, shadow=False)], YELLOW, pad=(36, 18))
 
