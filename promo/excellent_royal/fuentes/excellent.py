@@ -6,16 +6,31 @@ END = 15.0
 RED = (215, 25, 55); RC_RED = (200, 20, 40); GOLD = (190, 150, 60)
 
 
+from defan import remove_fan
+import cv2
+
+
 class CropClip(Clip):
+    """Lee el video, borra el ventilador de la pared y recién después desenfoca."""
     def __init__(self, path, ss, dur, pre='', blur=0, dim=0.0):
         vf = (pre + ',' if pre else '') + \
             f'fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},eq=saturation=1.2:contrast=1.06:brightness=0.03'
-        if blur:
-            vf += f',gblur=sigma={blur}'
+        self.blur = blur
         self.n = int(round(dur * FPS)); self.dim = dim; self.last = None
         self.p = subprocess.Popen(['ffmpeg', '-v', 'error', '-ss', str(ss), '-i', path, '-vf', vf,
                                    '-frames:v', str(self.n), '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'],
                                   stdout=subprocess.PIPE)
+    def frame(self):
+        buf = self.p.stdout.read(W * H * 3)
+        if len(buf) == W * H * 3:
+            arr = np.frombuffer(buf, np.uint8).reshape(H, W, 3)
+            arr, _ = remove_fan(arr, dark=105, sat=80, dil=0.03)
+            if self.blur:
+                arr = cv2.GaussianBlur(arr, (0, 0), self.blur)
+            if self.dim:
+                arr = (arr * (1 - self.dim)).astype(np.uint8)
+            self.last = Image.fromarray(arr).convert('RGBA')
+        return self.last.copy()
 
 
 def polaroid(spec, w=640, rot=0):
