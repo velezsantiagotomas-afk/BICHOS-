@@ -1,7 +1,7 @@
 exec(open('common_head.py').read())
 
 VX = UP + 'cfae7d86-20261116_104153.mp4'   # estante Excellent + Royal Canin
-PHOTOS = sys.argv[2].split(',') if len(sys.argv) > 2 else []
+PHOTOS = sys.argv[2].split(';') if len(sys.argv) > 2 else []
 END = 15.0
 RED = (215, 25, 55); RC_RED = (200, 20, 40); GOLD = (190, 150, 60)
 
@@ -18,8 +18,10 @@ class CropClip(Clip):
                                   stdout=subprocess.PIPE)
 
 
-def polaroid(path, w=640, rot=0):
-    im = Image.open(path).convert('RGB')
+def polaroid(spec, w=640, rot=0):
+    path, _, cap = spec.partition('|')
+    from PIL import ImageOps
+    im = ImageOps.exif_transpose(Image.open(path)).convert('RGB')
     r = w / im.width
     im = im.resize((w, int(im.height * r)), Image.LANCZOS)
     if im.height > int(w * 1.35):
@@ -31,6 +33,11 @@ def polaroid(path, w=640, rot=0):
     card_ = Image.alpha_composite(card_, sh.filter(ImageFilter.GaussianBlur(14)))
     ImageDraw.Draw(card_).rounded_rectangle((20, 20, 20 + w + 2 * b, 20 + im.height + b + bb), 18, fill=(255, 255, 255, 255))
     card_.paste(im, (20 + b, 20 + b))
+    if cap:
+        ts = text_sprite(cap, 46, fill=DARK, sw=0, shadow=False)
+        if ts.width > w:
+            ts = ts.resize((w, int(ts.height * w / ts.width)), Image.LANCZOS)
+        card_.alpha_composite(ts, (20 + b + (w - ts.width) // 2, 20 + b + im.height + (bb + b - ts.height) // 2 - 6))
     return card_
 
 
